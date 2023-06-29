@@ -5,16 +5,13 @@ import Switch from '@mui/material/Switch';
 import { INITIATOR_TOGGLE, INITIATOR_ROOT_URL } from '../../constants';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import JSONViewerComponent from '../JSONViewerComponent';
 import AppStateContext from '../../contexts/appStateContext';
 import Grid from '@mui/material/Grid';
-import { IconButton } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import './InitiatorComponent.css';
 
 const gridStyle = {
   p: 0.5,
@@ -25,16 +22,10 @@ const gridStyle = {
   },
 };
 
-const tabsStyle = { minHeight: 0, '& > div > div > button': { minHeight: 0 }, '& > div  > span': { display: 'none' } };
-const tabStyle = { p: 0, justifyContent: 'flex-start' };
-
 const InitiatorComponent = (): JSX.Element => {
-  const { disableRefreshButton, handleRefreshButtonClick, initiatorOutput } = useContext(AppStateContext);
+  const { initReqChain } = useContext(AppStateContext);
   const [initChainFeatureStatus, setInitChainFeatureStatus] = useState<boolean>(null);
   const [rootUrl, setRootUrl] = useState<string>('');
-
-  console.log('rootUrl', rootUrl);
-  console.log('initChainFeatureStatus', initChainFeatureStatus);
 
   useEffect(() => {
     chrome.storage.local.get(INITIATOR_TOGGLE, (result) => {
@@ -48,11 +39,7 @@ const InitiatorComponent = (): JSX.Element => {
       const value = result ? result[INITIATOR_ROOT_URL] : rootUrl;
       setRootUrl(value);
     });
-
-    if (!disableRefreshButton) {
-      handleRefreshButtonClick();
-    }
-  }, []);
+  }, [rootUrl]);
 
   const handleInitChainFeatureStatusChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInitChainFeatureStatus(event.target.checked);
@@ -80,18 +67,6 @@ const InitiatorComponent = (): JSX.Element => {
 
   return (
     <Grid container direction="row" justifyContent="start" spacing={0.25} sx={gridStyle}>
-      <Grid item xs={12} className="initiator-instructions">
-        <Tabs sx={tabsStyle} value={0}>
-          <Tab
-            sx={tabStyle}
-            label={
-              <Typography variant="h2" component={Paper} sx={{ p: 1, border: 1, borderColor: 'primary.main' }}>
-                Network Inspector
-              </Typography>
-            }
-          />
-        </Tabs>
-      </Grid>
       <Grid item xs={12}>
         <Box sx={{ backgroundColor: 'background.paper', borderRadius: 1, p: 1 }} className="box-wrapper">
           <Typography paragraph>
@@ -118,12 +93,10 @@ const InitiatorComponent = (): JSX.Element => {
                 Close Professor Prebid and open a new instance of the developer tools on the current webpage (right-click "Inspect").
               </Typography>
             </li>
-            <li>
-              <Typography component={'span'}>
+            <li className="refresh-icon__list-item">
+              <Typography component={'span'} className="initiator__flex-parent">
                 Re-open Professor Prebid, navigate back to the Network Inspector tool and click the{' '}
-                <IconButton size="small">
-                  <RefreshIcon />
-                </IconButton>{' '}
+                <RefreshIcon />
                 icon (top-right).
               </Typography>
             </li>
@@ -152,13 +125,10 @@ const InitiatorComponent = (): JSX.Element => {
             <Button variant="outlined" className="submit-button margin-right" onClick={handleSettingRootUrl}>
               Set URL
             </Button>
-            <Button variant="outlined" className="submit-button pbjs-orange" onClick={handleRefreshButtonClick} disabled={disableRefreshButton}>
-              Refresh
-            </Button>
           </div>
           <div className="initiator-output">
             <JSONViewerComponent
-              src={initiatorOutput}
+              src={initReqChain}
               name={false}
               collapsed={2}
               displayObjectSize={true}
@@ -177,10 +147,9 @@ const InitiatorComponent = (): JSX.Element => {
 };
 
 export interface InitiatorComponentProps {
-  initChain: any;
-  handleRefreshButtonClick: () => void;
-  initiatorOutput: any;
-  disableRefreshButton: boolean;
+  initReqChain: {
+    [key: string]: any;
+  }
 }
 
 export default InitiatorComponent;

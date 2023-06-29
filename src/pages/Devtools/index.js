@@ -168,6 +168,25 @@ function dynamicSort(property) {
     }
 }
 
+const sendMessage = reqChainObj => {
+  if (chrome.devtools.inspectedWindow.tabId) {
+    // chrome.runtime.sendMessage({
+    //     command: "initReqChain",
+    //     tabId: chrome.devtools.inspectedWindow.tabId,
+    //     args: JSON.stringify(reqChainObj)
+    // });
+    const type = 'initReqChain';
+    const payload = JSON.stringify(reqChainObj);
+    chrome.runtime.sendMessage({ type, payload });
+  }
+};
+
+const setToStorage = (key, value) => {
+  chrome.storage.local.set({ [key]: value }, () => {
+    // console.log('value set');
+  });
+};
+
 const getInitReqChainByUrl = (rootUrl, rootResourceType = false, rootRequestMethod = false) => {
     let initReqChainObj = {};
 
@@ -226,7 +245,9 @@ const getInitReqChainByUrl = (rootUrl, rootResourceType = false, rootRequestMeth
                 ): // root resource logic
                     initReqChainObj[rootUrl] = data;
                     setInvokedFuncHistory(har_entry);
-                    Console.log(initReqChainObj);
+                    // Console.log(initReqChainObj);
+                    // sendMessage(initReqChainObj);
+                    setToStorage('initReqChain', JSON.stringify(initReqChainObj));
                     break;
                 case Boolean( // logic for resources initiated from root resource
                     (
@@ -245,7 +266,9 @@ const getInitReqChainByUrl = (rootUrl, rootResourceType = false, rootRequestMeth
                         initReqChainObj[rootUrl].initiated.push(data);
                         // initReqChainObj[rootUrl].initiated.sort(dynamicSort('timeSincePageLoad'));
                         setInvokedFuncHistory(har_entry);
-                        Console.log(initReqChainObj);
+                        // Console.log(initReqChainObj);
+                        // sendMessage(initReqChainObj);
+                        setToStorage('initReqChain', JSON.stringify(initReqChainObj));
                     }
                     break;
                 default: // logic for resources redirected to from other resources (and everything else)
@@ -263,7 +286,9 @@ const getInitReqChainByUrl = (rootUrl, rootResourceType = false, rootRequestMeth
 
                             setInvokedFuncHistory(har_entry);
                             delete redirectTrackerObj[har_entry.request.url];
-                            Console.log(initReqChainObj);
+                            // Console.log(initReqChainObj);
+                            // sendMessage(initReqChainObj);
+                            setToStorage('initReqChain', JSON.stringify(initReqChainObj));
                         } else { // initiators
                             const initiatorOrderArray = [];
 
@@ -288,7 +313,9 @@ const getInitReqChainByUrl = (rootUrl, rootResourceType = false, rootRequestMeth
                             );
 
                             setInvokedFuncHistory(har_entry);
-                            Console.log(initReqChainObj);
+                            // Console.log(initReqChainObj);
+                            // sendMessage(initReqChainObj);
+                            setToStorage('initReqChain', JSON.stringify(initReqChainObj));
                         }
                     }
             }
@@ -308,6 +335,10 @@ chrome.storage.local.get('initiator_state', (result) => {
         });
     }
 });
+
+// export interface InitReqChainData {
+//   [key: string]: any;
+// }
 
 // https://ads.pubmatic.com/AdServer/js/user_sync.html
 // https://hbopenbid.pubmatic.com/translator

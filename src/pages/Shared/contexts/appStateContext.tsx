@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { useDebounce } from '../hooks/useDebounce';
 import { useMediaQuery, useTheme } from '@mui/material';
 import InspectedPageContext from './inspectedPageContext';
 import {
@@ -26,15 +27,8 @@ const AppStateContext = React.createContext<AppState>({
   auctionEndEvents: [],
   adsRendered: [],
   prebid: {} as IPrebidDetails,
-  handleRefreshButtonClick: () => {},
-  initChainObj: {},
-  setInitChainObj: {},
-  initiatorOutput: {},
-  disableRefreshButton: true,
+  initReqChain: {},
 });
-
-let initChain = {};
-let disableRefresh = true;
 
 export const StateContextProvider = ({ children }: StateContextProviderProps) => {
   const [pbjsNamespace, setPbjsNamespace] = useState<string | undefined>();
@@ -48,35 +42,11 @@ export const StateContextProvider = ({ children }: StateContextProviderProps) =>
   const [auctionEndEvents, setAuctionEndEvents] = useState<IPrebidAuctionEndEventData[]>([]);
   const [allWinningBids, setAllWinningBids] = React.useState<IPrebidBidWonEventData[]>([]);
   const [adsRendered, setAdsRendered] = React.useState<IPrebidAdRenderSucceededEventData[]>([]);
-  const [initChainObj, setInitChainObj] = React.useState<any>({});
-  const [initiatorOutput, setInitiatorOutput] = useState<any>({});
-  const [disableRefreshButton, setdisableRefreshButton] = useState<boolean>(true);
-
-  chrome.runtime.onMessage.addListener((request) => {
-    if (request.command === 'sendToConsole' && request.tabId) {
-      const result = JSON.parse(unescape(request.args));
-
-      if (JSON.stringify(initChain) !== JSON.stringify(result[1])) {
-        initChain = result[1];
-
-        if (disableRefresh) {
-          disableRefresh = false;
-          setdisableRefreshButton(false);
-          return;
-        }
-      }
-    }
-  });
-
-  const handleRefreshButtonClick = () => {
-    setInitiatorOutput(initChain);
-    disableRefresh = true;
-    setdisableRefreshButton(true);
-  };
-
-  const { prebids } = useContext(InspectedPageContext);
+  const { prebids, initReqChainData } = useContext(InspectedPageContext);
   const isSmallScreen = useMediaQuery(useTheme().breakpoints.down('sm'));
   const isPanel = useMediaQuery(useTheme().breakpoints.up('md'));
+  const [initiatorOutput, setInitiatorOutput] = useState<any>({});
+  const initReqChain = useDebounce(initiatorOutput, 1000);
 
   useEffect(() => {
     if (pbjsNamespace === undefined && prebids && Object.keys(prebids).length > 0) {
@@ -85,6 +55,11 @@ export const StateContextProvider = ({ children }: StateContextProviderProps) =>
       setPbjsNamespace(newValue);
     }
   }, [pbjsNamespace, prebids, setPbjsNamespace]);
+
+  useEffect(() => {
+    const reqChainData = JSON.parse(initReqChainData?.initReqChain || {});
+    setInitiatorOutput(reqChainData);
+  }, [initReqChainData]);
 
   useEffect(() => {
     const prebid = prebids?.[pbjsNamespace] || ({} as IPrebidDetails);
@@ -137,11 +112,7 @@ export const StateContextProvider = ({ children }: StateContextProviderProps) =>
     auctionInitEvents,
     auctionEndEvents,
     adsRendered,
-    handleRefreshButtonClick,
-    initChainObj,
-    setInitChainObj,
-    initiatorOutput,
-    disableRefreshButton,
+    initReqChain,
   };
 
   return <AppStateContext.Provider value={contextValue}>{children}</AppStateContext.Provider>;
@@ -164,11 +135,9 @@ interface AppState {
   auctionInitEvents: IPrebidAuctionEndEventData[];
   auctionEndEvents: IPrebidAuctionEndEventData[];
   adsRendered: IPrebidAdRenderSucceededEventData[];
-  handleRefreshButtonClick: any;
-  initChainObj: any;
-  setInitChainObj: any;
-  initiatorOutput: any;
-  disableRefreshButton: boolean;
+  initReqChain: {
+    [key: string]: any;
+  }
 }
 
 interface StateContextProviderProps {
