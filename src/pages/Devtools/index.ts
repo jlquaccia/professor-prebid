@@ -185,6 +185,8 @@ const getInitReqChainByUrl = (rootUrl: string, rootResourceType: string, rootReq
           !initReqChainObj[harEntryRequestUrl]
         ): // root resource logic
           try {
+            console.log('har_entry.request.url: ', har_entry.request.url);
+            console.log('har_entry: ', har_entry);
             await setRootUrlToInitReqChainObj(initReqChainObj, buildObjectFromHarEntry(har_entry));
           } catch (error) {
             console.error('Something went wrong: ', error);

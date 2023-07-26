@@ -24,7 +24,7 @@ const gridStyle = {
 };
 
 const InitiatorComponent = (): JSX.Element => {
-  const { initiatorOutput, isRefresh, initDataLoaded, setInitDataLoaded } = useContext(AppStateContext);
+  const { initReqChainResult, isRefresh, initDataLoaded, setInitDataLoaded } = useContext(AppStateContext);
   const [initChainFeatureStatus, setInitChainFeatureStatus] = useState<boolean>(null);
   const [rootUrl, setRootUrl] = useState<string>('');
   const [showReqChain, setShowReqChain] = useState<boolean>(false);
@@ -36,6 +36,10 @@ const InitiatorComponent = (): JSX.Element => {
       setInitDataLoaded(true);
     }
   });
+
+  useEffect(() => {
+    console.log('an update to the initReqChainResult was made');
+  }, [initReqChainResult]);
 
   useEffect(() => {
     chrome.storage.local.get(INITIATOR_TOGGLE, (result) => {
@@ -140,11 +144,11 @@ const InitiatorComponent = (): JSX.Element => {
               Set URL
             </Button>
           </div>
-          <div className={`initiator__output ${(showReqChain || initDataLoaded) && initiatorOutput && Object.keys(initiatorOutput).length > 0 ? 'initiator__output-left-align' : ''}`}>
-            {(showReqChain || initDataLoaded) && initiatorOutput && Object.keys(initiatorOutput).length > 0
+          <div className={`initiator__output ${(showReqChain || initDataLoaded) && initReqChainResult && Object.keys(initReqChainResult).length > 0 ? 'initiator__output-left-align' : ''}`}>
+            {(showReqChain || initDataLoaded) && initReqChainResult && Object.keys(initReqChainResult).length > 0
               ? (
                   <JSONViewerComponent
-                    src={initiatorOutput}
+                    src={initReqChainResult}
                     name={false}
                     collapsed={2}
                     displayObjectSize={true}
